@@ -87,7 +87,7 @@ p <- ggplot(df_plot,aes(x=date,y=value)) +
         axis.text.y=element_text(size=13),axis.title.y=element_text(size=18))
 # save
 # ggsave(paste0("vaccine_by_age_rate.png"),width=45,height=30,units="cm")
-p_log<-p + scale_y_log10(limits=c(0.03,10)); p_log
+p_log<-p + scale_y_log10(limits=c(0.03,10),breaks=c(0.1,0.5,1,2,5,10)); p_log
 ggsave(paste0(vaccine_folder,"vaccine_by_age_rate_log.png"),width=45,height=25,units="cm")
 p; ggsave(paste0(vaccine_folder,"vaccine_by_age_rate_lin.png"),width=45,height=25,units="cm")
 
