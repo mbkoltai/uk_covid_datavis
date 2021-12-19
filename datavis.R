@@ -50,7 +50,8 @@ ggplot() +
   theme_bw() + standard_theme + theme(axis.text.x=element_text(vjust=1/2),legend.position="top",
       legend.text=element_text(size=10)) + xlab("") + ylab("% age group vaccinated in England")
 ## SAVE
-ggsave(paste0("vaccine_by_age_cumul.png"),width=20,height=15,units="cm")
+vaccine_folder<-"vaccine_data/"; if (!dir.exists(vaccine_folder)) {dir.create(vaccine_folder)}
+ggsave(paste0(vaccine_folder,"vaccine_by_age_cumul.png"),width=20,height=15,units="cm")
 # ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### 
 # daily rate as % of age group
 df_plot <- vacc_dose_data_eng %>% # filter(date>as.Date("2020-12-14")) %>%
@@ -87,8 +88,8 @@ p <- ggplot(df_plot,aes(x=date,y=value)) +
 # save
 # ggsave(paste0("vaccine_by_age_rate.png"),width=45,height=30,units="cm")
 p_log<-p + scale_y_log10(limits=c(0.03,10)); p_log
-ggsave(paste0("vaccine_by_age_rate_log.png"),width=45,height=25,units="cm")
-p; ggsave(paste0("vaccine_by_age_rate_lin.png"),width=45,height=25,units="cm")
+ggsave(paste0(vaccine_folder,"vaccine_by_age_rate_log.png"),width=45,height=25,units="cm")
+p; ggsave(paste0(vaccine_folder,"vaccine_by_age_rate_lin.png"),width=45,height=25,units="cm")
 
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
@@ -121,9 +122,10 @@ p <- ggplot(df_plot,aes(x=date,y=value)) +
         axis.text.y=element_text(size=14),axis.title.y=element_text(size=18))
 # SAVE
 # ggsave(paste0("vaccine_by_age_rate_absnum.png"),width=45,height=30,units="cm")
-p_log<-p+scale_y_log10(); ggsave(paste0("vaccine_by_age_rate_absnum_log.png"),width=45,height=30,units="cm")
+p_log<-p+scale_y_log10(); ggsave(paste0(vaccine_folder,"vaccine_by_age_rate_absnum_log.png"),
+                                 width=45,height=30,units="cm")
 p_lin<-p+scale_y_continuous(limits=c(5e2,2e5)); p_lin
-ggsave(paste0("vaccine_by_age_rate_absnum_lin.png"),width=45,height=30,units="cm")
+ggsave(paste0(vaccine_folder,"vaccine_by_age_rate_absnum_lin.png"),width=45,height=30,units="cm")
 
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### 
 # PHASE PLOT
@@ -154,8 +156,8 @@ ggplot(df_plot) + #  %>% mutate(cumul=ifelse(cumul==0,NA,cumul)),rate=ifelse(rat
   ggtitle("Orange to red: 1st dose. Grey to black: 2nd dose. Color scales: days from 14/Dec/2020.") + 
   xlab("cumulative: % age group") + ylab("daily vaccinations: % age group") + guides(color="none")
 # save
-# ggsave(paste0("vaccine_by_age_phaseportrait_both_doses_line.png"),width=33,height=22,units="cm")
-ggsave(paste0("vaccine_by_age_phaseportrait_both_doses_line_log.png"),width=33,height=22,units="cm")
+ggsave(paste0(vaccine_folder,"vaccine_by_age_phaseportrait_both_doses_line_log.png"),
+       width=33,height=22,units="cm")
 
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### 
 # all age groups together # vacc_dose_sum
@@ -175,10 +177,6 @@ vacc_dose_data_eng_totals <- vacc_dose_data_eng %>% group_by(date,date_numeric) 
           dose=ifelse(grepl("first",name),"first",ifelse(grepl("second",name),"second","third") ) ) %>% 
   select(!name) %>% pivot_wider(names_from=type,values_from=value) %>% group_by(dose) %>%
   mutate(date_numeric=date-min(date[cumul>0.5])) %>% filter(!is.na(rate) & date_numeric>0)
-# vacc_dose_sum <- vacc_dose_data_eng_totals %>% group_by(date,date_numeric) %>% 
-#   summarise(rate=sum(rate),cumul=min(cumul),dose="sum (cumul: three doses)")
-# if (!any(vacc_dose_data_eng_totals$dose %in% "sum")){
-#   vacc_dose_data_eng_totals=bind_rows(vacc_dose_sum,vacc_dose_data_eng_totals)}
 color_legends <- c("first dose"="blue", "second dose"="red", "third dose"="green"); circle_size=2.5
 # plot
 ggplot(vacc_dose_data_eng_totals) + #  %>% filter(!grepl("cumul",dose))
@@ -194,7 +192,7 @@ ggplot(vacc_dose_data_eng_totals) + #  %>% filter(!grepl("cumul",dose))
     strip.text=element_text(size=18),legend.text=element_text(size=17),legend.position="top",
     legend.key.width=unit(1.2,'cm')) + labs(color="",fill="days from >0.5% cumulative coverage")
 # save
-ggsave(paste0("vaccine_allage_phaseportrait_3rows.png"),width=35,height=32,units="cm")
+ggsave(paste0(vaccine_folder,"vaccine_allage_phaseportrait_3rows.png"),width=35,height=32,units="cm")
 
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### 
 # CASES 
