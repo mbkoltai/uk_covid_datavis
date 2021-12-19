@@ -1,3 +1,3 @@
-# UK COVID-19 data: vaccine rollout, cases, hospitalisations and deaths
+# England COVID-19 data: vaccine rollout, cases, hospitalisations and deaths
 
-Plots on UK vaccine, case, hospitalisation and death data
+Plots on England's vaccine rollout, case, hospitalisation and death data
