@@ -153,7 +153,7 @@ ggplot(df_plot) + #  %>% mutate(cumul=ifelse(cumul==0,NA,cumul)),rate=ifelse(rat
       axis.title.x=element_text(size=16),axis.title.y=element_text(size=16),strip.text=element_text(size=15),
       legend.title=element_text(size=16),legend.text=element_text(size=16),legend.position="top",
       legend.key.width=unit(1.2,'cm'), plot.title=element_text(size=16)) + 
-  ggtitle("Orange to red: 1st dose. Grey to black: 2nd dose. Color scales: days from 14/Dec/2020.") + 
+  ggtitle("Orange to red: 1st dose. Grey to black: 2nd. Cyan: 3rd. Color scales: days from 14/Dec/2020.") + 
   xlab("cumulative: % age group") + ylab("daily vaccinations: % age group") + guides(color="none")
 # save
 ggsave(paste0(vaccine_folder,"vaccine_by_age_phaseportrait_both_doses_line_log.png"),
