@@ -129,31 +129,37 @@ ggsave(paste0(vaccine_folder,"vaccine_by_age_rate_absnum_lin.png"),width=45,heig
 
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### 
 # PHASE PLOT
-n_uni_col<-nrow(vacc_dose_data_eng %>% filter(date>as.Date("2020-12-14")) %>% 
-                  group_by(date) %>% summarise(unique(date)))
-colorpal<-c(colorRampPalette(colors=c("orange","red"))(n_uni_col),
-            colorRampPalette(colors=c("grey","black"))(n_uni_col),
-            colorRampPalette(colors=c("blue","cyan"))(n_uni_col))
-df_plot<-vacc_dose_data_eng %>% filter(date>as.Date("2020-12-14")) %>% mutate(age=gsub("_","-",age)) %>%
+# for plotting
+df_plot <- vacc_dose_data_eng %>% filter(date>as.Date("2020-12-14")) %>% mutate(age=gsub("_","-",age)) %>%
  select(matches("date|daily|cumVaccinationFirst|cumVaccinationComplete|age",ignore.case=F) & 
           !matches("complete")) %>%
   pivot_longer(!c(date,date_numeric,age)) %>% mutate(dose=ifelse(grepl("first|First",name),"first",
              ifelse(grepl("second|Second",name),"second","third")),
         type=ifelse(grepl("daily",name),"rate","cumul")) %>% 
-  select(!c(name)) %>% pivot_wider(names_from=type)
+  select(!c(name)) %>% pivot_wider(names_from=type) %>% filter(cumul>0.5) %>%
+  group_by(age,dose) %>% mutate(start_date=min(date) ) %>% ungroup() %>%
+  mutate(date_from_start=as.numeric(date-start_date))
+# colors to show passage of time
+n_uni_col<-nrow(vacc_dose_data_eng %>% filter(date>as.Date("2020-12-14")) %>% 
+                  group_by(date) %>% summarise(unique(date)))
+n_col<-(df_plot %>% ungroup() %>% group_by(dose) %>% summarise(n_col=n_distinct(date_from_start)))$n_col
+colorpal<-c(colorRampPalette(colors=c("orange","red"))(n_col[1]),
+            colorRampPalette(colors=c("grey","black"))(n_col[2]),
+            colorRampPalette(colors=c("cyan","blue"))(n_col[3]))
 # PLOT
-ggplot(df_plot) + #  %>% mutate(cumul=ifelse(cumul==0,NA,cumul)),rate=ifelse(rate==0,NA,rate)
-  geom_path(aes(y=rate,x=cumul,group=dose,color=interaction(date,dose)),size=1.3) +
+ggplot(df_plot) + 
+  geom_point(aes(y=rate,x=cumul,group=dose,color=interaction(date_from_start,dose)),size=1/2,shape=21,fill=NA) +
   scale_color_manual(values=colorpal) + facet_wrap(~age,scales="free_y") +
   scale_x_continuous(breaks=(0:10)*10,expand=expansion(0.03,0)) + 
-  scale_y_log10(limits=c(0.06,7)) + 
-  geom_vline(xintercept=c(60,70,80,90),linetype="dashed",size=1/4) +
+  scale_y_log10(limits=c(0.04,7),breaks=c(0.1,0.2,0.5,1,2,4)) + 
+  geom_vline(xintercept=c(60,70,80,90),linetype="dashed",size=1/3) +
   theme_bw() + standard_theme + 
-  theme(axis.text.x=element_text(vjust=1/2,size=14),axis.text.y=element_text(size=14),
+  theme(axis.text.x=element_text(vjust=1/2,size=12),axis.text.y=element_text(size=12),
       axis.title.x=element_text(size=16),axis.title.y=element_text(size=16),strip.text=element_text(size=15),
       legend.title=element_text(size=16),legend.text=element_text(size=16),legend.position="top",
-      legend.key.width=unit(1.2,'cm'), plot.title=element_text(size=16)) + 
-  ggtitle("Orange to red: 1st dose. Grey to black: 2nd. Cyan: 3rd. Color scales: days from 14/Dec/2020.") + 
+      legend.key.width=unit(1.2,'cm'),plot.title=element_text(size=16),
+      panel.grid.minor=element_blank()) + # element_line(colour="grey", linetype="dashed",size=1/6)
+  ggtitle("Orange to red: 1st dose. Grey to black: 2nd. Cyan to blue: 3rd. Color scales: days from ≥0.5% jabbed.") +
   xlab("cumulative: % age group") + ylab("daily vaccinations: % age group") + guides(color="none")
 # save
 ggsave(paste0(vaccine_folder,"vaccine_by_age_phaseportrait_both_doses_line_log.png"),
