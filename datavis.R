@@ -78,7 +78,7 @@ p <- ggplot(df_plot,aes(x=date,y=value)) +
   geom_line(data=df_plot %>% filter(value_type %in% "smoothed"),aes(group=dose) ) + 
   geom_point(data=df_plot %>% filter(!(value_type %in% "smoothed") & as.numeric(date) %% 4),
              aes(color=dose),shape=21,size=1) + # ,show.legend=F,
-  facet_wrap(~age,scales="free_y") + scale_size(range=c(0,1)) +
+  facet_wrap(~age,scales="free_y") + scale_size(range=c(0,1)) + # 
   scale_x_date(date_breaks="month",expand=expansion(0.01,0)) + # scale_y_log10(limits=c(0.03,10)) + 
   theme_bw() + standard_theme + theme(axis.text.x=element_text(vjust=1/2)) + 
   xlab("") + ylab("% of age group") + labs(color="") + 
