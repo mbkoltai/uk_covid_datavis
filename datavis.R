@@ -110,6 +110,7 @@ df_plot <- vacc_dose_data_eng %>%
          name=ifelse(value_type %in% "daily",name,
            ifelse(grepl("first",name),"1st dose",ifelse(grepl("second",name),"2nd dose","3rd dose")) ),
          age=gsub("_","-",age),value=ifelse(value<1e2,NA,value))
+# PLOT
 p <- ggplot(df_plot,aes(x=date,y=value)) + 
   geom_line(data=df_plot %>% filter(value_type %in% "smoothed"),aes(group=dose)) + 
   geom_point(data=df_plot %>% filter(!(value_type %in% "smoothed") & as.numeric(date) %% 4),aes(color=dose),
@@ -151,10 +152,10 @@ ggplot(df_plot) +
   geom_point(aes(y=rate,x=cumul,group=dose,color=interaction(date_from_start,dose)),size=1/2,shape=21,fill=NA) +
   scale_color_manual(values=colorpal) + facet_wrap(~age,scales="free_y") +
   scale_x_continuous(breaks=(0:10)*10,expand=expansion(0.03,0)) + 
-  scale_y_log10(limits=c(0.04,7),breaks=c(0.1,0.2,0.5,1,2,4)) + 
+  scale_y_log10(limits=c(0.03,7),breaks=c(0.05,0.1,0.2,0.5,1,2,4)) + 
   geom_vline(xintercept=c(60,70,80,90),linetype="dashed",size=1/3) +
   theme_bw() + standard_theme + 
-  theme(axis.text.x=element_text(vjust=1/2,size=12),axis.text.y=element_text(size=12),
+  theme(axis.text.x=element_text(vjust=1/2,size=12),axis.text.y=element_text(size=10),
       axis.title.x=element_text(size=16),axis.title.y=element_text(size=16),strip.text=element_text(size=15),
       legend.title=element_text(size=16),legend.text=element_text(size=16),legend.position="top",
       legend.key.width=unit(1.2,'cm'),plot.title=element_text(size=16),
