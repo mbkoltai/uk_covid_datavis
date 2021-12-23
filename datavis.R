@@ -220,15 +220,15 @@ agegr_names=paste0(unlist(lapply(l_num, function(x)
 # PLOT CHANGE in RATES
 start_date<-as.Date("2021-09-01")
 ggplot(eng_case_age_data %>% filter(date>start_date),
-       aes(x=date,y=(rollingsum_chng-1)*100,color=factor(age_num),group=age_num)) +
+       aes(x=date,y=(rollingsum_chng),color=factor(age_num),group=age_num)) + # -1)*100 # log2
   geom_line(size=1.02) + facet_wrap(~age_categ) + # ,scales="free_y") + # 
-  geom_hline(yintercept=0,linetype="dashed",size=1/2) + 
-  scale_x_date(expand=expansion(0.01,0),breaks="week") + scale_y_continuous(breaks=(-4:10)*25) +
-  labs(color="5y age band within age group",caption=paste0("agegroups: ",agegr_names)) +
-  xlab("") + ylab("weekly sum % change") +
-  theme_bw() + standard_theme + theme(axis.text.x=element_text(size=10),axis.text.y=element_text(size=10),
-      strip.text=element_text(size=14),legend.title=element_text(size=12),legend.text=element_text(size=12),
-      legend.position="bottom",plot.caption=element_text(size=10))
+  geom_hline(yintercept=1,linetype="dashed",size=1/2) + 
+  scale_x_date(expand=expansion(0.01,0),breaks="week") + scale_y_continuous(breaks=c(1/4,1/3,1/2,1,1.5,2,2.5,3,4)) + # 
+  labs(color="5-year age bands within age groups",caption=paste0("agegroups: ",gsub("\\], ","\\]\n",agegr_names))) +
+  xlab("") + ylab("ratio of weekly rolling sum to a week ago") +
+  theme_bw() + standard_theme + theme(axis.text.x=element_text(size=12),axis.text.y=element_text(size=12),
+      strip.text=element_text(size=16),legend.title=element_text(size=15),legend.text=element_text(size=13),
+      legend.position="bottom",plot.caption=element_text(size=13),panel.grid.minor.y=element_blank())
 # save
 # ggsave(paste0("england_cases_age_4groups_log.png"),width=34,height=22,units="cm")
 ggsave(paste0("england_cases_age_4groups_rollingsum_change.png"),width=34,height=22,units="cm")
