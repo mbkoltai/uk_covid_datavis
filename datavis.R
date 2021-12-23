@@ -129,8 +129,8 @@ p_lin<-p+scale_y_continuous(limits=c(5e2,2e5)); p_lin
 ggsave(paste0(vaccine_folder,"vaccine_by_age_rate_absnum_lin.png"),width=45,height=30,units="cm")
 
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### 
-# PHASE PLOT
-# for plotting
+# PHASE PLOT vacc rollout
+
 df_plot <- vacc_dose_data_eng %>% filter(date>as.Date("2020-12-14")) %>% mutate(age=gsub("_","-",age)) %>%
  select(matches("date|daily|cumVaccinationFirst|cumVaccinationComplete|age",ignore.case=F) & 
           !matches("complete")) %>%
@@ -253,7 +253,8 @@ p<-eng_case_age_data %>% mutate(ten_year_band_num=round(as.numeric(strsplit(age,
   scale_x_date(expand=expansion(0.02,0),breaks="2 week") + 
   theme_bw() + standard_theme + theme(axis.text.x=element_text(size=12),axis.text.y=element_text(size=12),
     strip.text=element_text(size=17),legend.title=element_blank(),legend.text=element_text(size=17),
-    axis.title.y=element_text(size=19),plot.caption=element_text(size=12)) + xlab("") + ylab("cases")
+    axis.title.y=element_text(size=19),plot.caption=element_text(size=12),panel.grid.minor.y=element_blank()) + 
+  xlab("") + ylab("cases")
 if (k==1){p <- p + scale_y_log10(breaks=round(2^seq(3,14,by=1/2))) } else { 
   p<-p+scale_y_continuous(breaks=(0:12)*2e3) } # sapply(10^seq(1,4,by=1/4),function(x) round(x,max(3-round(log(x)),0)))
 p
