@@ -221,7 +221,7 @@ agegr_names=paste0(unlist(lapply(l_num, function(x)
 start_date<-as.Date("2021-09-01")
 ggplot(eng_case_age_data %>% filter(date>start_date),
        aes(x=date,y=(rollingsum_chng),color=factor(age_num),group=age_num)) + # -1)*100 # log2
-  geom_line(size=1.02) + facet_wrap(~age_categ) + # ,scales="free_y") + # 
+  geom_line() + geom_point(size=3/4,shape=21,fill=NA) + facet_wrap(~age_categ) + # ,scales="free_y") + # 
   geom_hline(yintercept=1,linetype="dashed",size=1/2) + 
   scale_x_date(expand=expansion(0.01,0),breaks="week") + scale_y_continuous(breaks=c(1/4,1/3,1/2,1,1.5,2,2.5,3,4)) + # 
   labs(color="5-year age bands within age groups",caption=paste0("agegroups: ",gsub("\\], ","\\]\n",agegr_names))) +
@@ -235,7 +235,7 @@ ggsave(paste0("england_cases_age_4groups_rollingsum_change.png"),width=34,height
 
 ###################################################
 # ABSOLUTE NUMBER of cases in 10-year bands
-for (k in 1:2){
+for (k_plot in 1:3){
 p<-eng_case_age_data %>% mutate(ten_year_band_num=round(as.numeric(strsplit(age,"_")[[1]][2])/10)*10,
                              ten_year_band_num=ifelse(is.na(ten_year_band_num),90,ten_year_band_num),
   ten_year_band=ifelse(ten_year_band_num-5<0,"<5",paste0(ten_year_band_num-5,"_",ten_year_band_num+4))) %>%
@@ -249,18 +249,19 @@ p<-eng_case_age_data %>% mutate(ten_year_band_num=round(as.numeric(strsplit(age,
          age_meta_name=paste0("[",paste0(ten_year_band,collapse=", "),"]",sep="")) %>% 
   filter(date>as.Date("2021-08-01")) %>%
   ggplot() + geom_line(aes(x=date,y=rollingSum,color=order_within),size=1.1) +
-  facet_wrap(~age_meta_name,nrow=2,scales=ifelse(k==1,"free_y","fixed")) + 
+  facet_wrap(~age_meta_name,nrow=2,scales=ifelse(k_plot==1,"free_y","fixed")) + 
   scale_x_date(expand=expansion(0.02,0),breaks="2 week") + 
   theme_bw() + standard_theme + theme(axis.text.x=element_text(size=12),axis.text.y=element_text(size=12),
     strip.text=element_text(size=17),legend.title=element_blank(),legend.text=element_text(size=17),
     axis.title.y=element_text(size=19),plot.caption=element_text(size=12),panel.grid.minor.y=element_blank()) + 
   xlab("") + ylab("cases")
-if (k==1){p <- p + scale_y_log10(breaks=round(2^seq(3,14,by=1/2))) } else { 
+if (k_plot %in% c(1,3)){p <- p + scale_y_log10(breaks=round(2^seq(3,14,by=ifelse(k_plot==1,1/2,1)))) } else { 
   p<-p+scale_y_continuous(breaks=(0:12)*2e3) } # sapply(10^seq(1,4,by=1/4),function(x) round(x,max(3-round(log(x)),0)))
 p
 # SAVE # 
-ggsave(paste0("england_cases_number_10_yr_agebands",
-              ifelse(grepl("log",p$scales$scales[[2]]$trans$name),"_log",""),
+ggsave(paste0("england_cases_number_10_yr_agebands_y",
+              ifelse(grepl("log",p$scales$scales[[2]]$trans$name),"_log","_lin"),
+              ifelse(k_plot>1,"_fixed","_free"),
               ".png",collapse=""),width=36,height=22,units="cm")
 }
 
