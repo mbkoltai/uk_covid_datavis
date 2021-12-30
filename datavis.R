@@ -235,6 +235,7 @@ ggsave(paste0("england_cases_age_4groups_rollingsum_change.png"),width=34,height
 
 ###################################################
 # ABSOLUTE NUMBER of cases in 10-year bands
+start_date<-"2021-09-01"
 for (k_plot in 1:3){
 p<-eng_case_age_data %>% mutate(ten_year_band_num=round(as.numeric(strsplit(age,"_")[[1]][2])/10)*10,
                              ten_year_band_num=ifelse(is.na(ten_year_band_num),90,ten_year_band_num),
@@ -247,10 +248,10 @@ p<-eng_case_age_data %>% mutate(ten_year_band_num=round(as.numeric(strsplit(age,
   mutate(ten_year_band=factor(ten_year_band,levels=unique(ten_year_band))) %>% group_by(age_meta,date) %>% 
   mutate(order_within=c("lower","higher")[row_number()],
          age_meta_name=paste0("[",paste0(ten_year_band,collapse=", "),"]",sep="")) %>% 
-  filter(date>as.Date("2021-08-01")) %>%
+  filter(date>as.Date(start_date)) %>%
   ggplot() + geom_line(aes(x=date,y=rollingSum,color=order_within),size=1.1) +
   facet_wrap(~age_meta_name,nrow=2,scales=ifelse(k_plot==1,"free_y","fixed")) + 
-  scale_x_date(expand=expansion(0.02,0),breaks="2 week") + 
+  scale_x_date(expand=expansion(0.02,0),breaks="1 week") + 
   theme_bw() + standard_theme + theme(axis.text.x=element_text(size=12),axis.text.y=element_text(size=12),
     strip.text=element_text(size=17),legend.title=element_blank(),legend.text=element_text(size=17),
     axis.title.y=element_text(size=19),plot.caption=element_text(size=12),panel.grid.minor.y=element_blank()) + 
