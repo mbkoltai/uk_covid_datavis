@@ -256,7 +256,7 @@ p<-eng_case_age_data %>% mutate(ten_year_band_num=round(as.numeric(strsplit(age,
     strip.text=element_text(size=17),legend.title=element_blank(),legend.text=element_text(size=17),
     axis.title.y=element_text(size=19),plot.caption=element_text(size=12),panel.grid.minor.y=element_blank()) + 
   xlab("") + ylab("cases")
-if (k_plot %in% c(1,3)){p <- p + scale_y_log10(breaks=round(2^seq(3,14,by=ifelse(k_plot==1,1/2,1)))) } else { 
+if (k_plot %in% c(1,3)){p <- p + scale_y_log10(breaks=round(2^seq(3,15,by=ifelse(k_plot==1,1/2,1)))) } else { 
   p<-p+scale_y_continuous(breaks=(0:12)*2e3) } # sapply(10^seq(1,4,by=1/4),function(x) round(x,max(3-round(log(x)),0)))
 p
 # SAVE # 
