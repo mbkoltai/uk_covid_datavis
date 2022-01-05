@@ -235,21 +235,23 @@ ggsave(paste0("england_cases_age_4groups_rollingsum_change.png"),width=34,height
 
 ###################################################
 # ABSOLUTE NUMBER of cases in 10-year bands
-start_date<-"2021-09-01"
+start_date<-"2021-10-01"
 for (k_plot in 1:3){
-p<-eng_case_age_data %>% mutate(ten_year_band_num=round(as.numeric(strsplit(age,"_")[[1]][2])/10)*10,
-                             ten_year_band_num=ifelse(is.na(ten_year_band_num),90,ten_year_band_num),
-  ten_year_band=ifelse(ten_year_band_num-5<0,"<5",paste0(ten_year_band_num-5,"_",ten_year_band_num+4))) %>%
-  mutate(ten_year_band=ifelse(is.na(ten_year_band)|grepl("85",ten_year_band),">85",ten_year_band)) %>%
-  group_by(date,ten_year_band) %>% 
-  summarise(rollingSum=sum(rollingSum)/7,ten_year_band_num=unique(ten_year_band_num)/10) %>% 
-  mutate(ten_year_band_num=ifelse(is.na(ten_year_band_num),9,ten_year_band_num)+1,
-         age_meta=round((ten_year_band_num+0.9)/2)) %>% ungroup() %>% arrange(date,ten_year_band_num) %>% 
-  mutate(ten_year_band=factor(ten_year_band,levels=unique(ten_year_band))) %>% group_by(age_meta,date) %>% 
-  mutate(order_within=c("lower","higher")[row_number()],
-         age_meta_name=paste0("[",paste0(ten_year_band,collapse=", "),"]",sep="")) %>% 
-  filter(date>as.Date(start_date)) %>%
-  ggplot() + geom_line(aes(x=date,y=rollingSum,color=order_within),size=1.1) +
+df_plot <- eng_case_age_data %>% mutate(ten_year_band_num=round(as.numeric(strsplit(age,"_")[[1]][2])/10)*10,
+           ten_year_band_num=ifelse(is.na(ten_year_band_num),90,ten_year_band_num),
+           ten_year_band=ifelse(ten_year_band_num-5<0,"<5",paste0(ten_year_band_num-5,"_",ten_year_band_num+4))) %>%
+    mutate(ten_year_band=ifelse(is.na(ten_year_band)|grepl("85",ten_year_band),">85",ten_year_band)) %>%
+    group_by(date,ten_year_band) %>% 
+    summarise(rollingSum=sum(rollingSum)/7,ten_year_band_num=unique(ten_year_band_num)/10) %>% 
+    mutate(ten_year_band_num=ifelse(is.na(ten_year_band_num),9,ten_year_band_num)+1,
+           age_meta=round((ten_year_band_num+0.9)/2)) %>% ungroup() %>% arrange(date,ten_year_band_num) %>% 
+    mutate(ten_year_band=factor(ten_year_band,levels=unique(ten_year_band))) %>% group_by(age_meta,date) %>% 
+    mutate(order_within=c("lower","higher")[row_number()],
+           age_meta_name=paste0("[",paste0(ten_year_band,collapse=", "),"]",sep="")) %>% 
+  filter(date>as.Date(start_date)) %>% ungroup()
+# PLOT  
+p <- ggplot(df_plot) + geom_line(aes(x=date,y=rollingSum,color=order_within),size=1.1) +
+  geom_point(data=df_plot %>% filter(date>max(date)-8),aes(x=date,y=rollingSum,color=order_within),size=1.5,shape=21) +
   facet_wrap(~age_meta_name,nrow=2,scales=ifelse(k_plot==1,"free_y","fixed")) + 
   scale_x_date(expand=expansion(0.02,0),breaks="1 week") + 
   theme_bw() + standard_theme + theme(axis.text.x=element_text(size=12),axis.text.y=element_text(size=12),
@@ -257,7 +259,7 @@ p<-eng_case_age_data %>% mutate(ten_year_band_num=round(as.numeric(strsplit(age,
     axis.title.y=element_text(size=19),plot.caption=element_text(size=12),panel.grid.minor.y=element_blank()) + 
   xlab("") + ylab("cases")
 if (k_plot %in% c(1,3)){p <- p + scale_y_log10(breaks=round(2^seq(3,15,by=ifelse(k_plot==1,1/2,1)))) } else { 
-  p<-p+scale_y_continuous(breaks=(0:12)*2e3) } # sapply(10^seq(1,4,by=1/4),function(x) round(x,max(3-round(log(x)),0)))
+  p<-p+scale_y_continuous(breaks=(0:16)*2e3) } # sapply(10^seq(1,4,by=1/4),function(x) round(x,max(3-round(log(x)),0)))
 p
 # SAVE # 
 ggsave(paste0("england_cases_number_10_yr_agebands_y",
