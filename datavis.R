@@ -18,9 +18,10 @@ ons_all_age_groups_uk_england_2019 <- read_csv("ons_all_age_groups_uk_england_20
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 # vacc uptake
 url_data<-
-  "https://api.coronavirus.data.gov.uk/v2/data?areaType=nation&areaCode=E92000001&metric=vaccinationsAgeDemographics&format=csv"
+ "https://api.coronavirus.data.gov.uk/v2/data?areaType=nation&areaCode=E92000001&metric=vaccinationsAgeDemographics&format=csv"
 
-vacc_dose_data_eng <- left_join(read_csv(url_data),ONS_2019_population_estim %>% #  %>% select(!contains("UK"))
+
+vacc_dose_data_eng <- left_join(read_csv(url_data),ONS_2019_population_estim %>% select(!contains(c("UK","London"))) %>%
                                 rename(population=England),by="age")
 vacc_dose_data_eng <- vacc_dose_data_eng %>% group_by(age) %>% 
   mutate(daily_first_dose_perc_agegroup=1e2*roll_mean(
@@ -271,7 +272,7 @@ ggsave(paste0("england_cases_number_10_yr_agebands_y",
 ######################################################
 # RATE of CASES in 10-yr bands
 df_cases<-left_join(eng_case_age_data,ons_all_age_groups_uk_england_2019,by="age") %>% 
-  select(!c(UK,areaCode,areaType,age_categ,areaName)) %>% rename(population=England) %>% 
+  select(!c(UK,London,areaCode,areaType,age_categ,areaName)) %>% rename(population=England) %>% 
   ungroup() %>% mutate(age_num=as.numeric(factor(age)),
                        meta_age=ifelse(ceiling(age_num/2)>8,9,ceiling(age_num/2))) %>% 
   group_by(date,meta_age) %>% 
@@ -363,7 +364,7 @@ deaths_age<-read_csv(death_url) %>% group_by(age) %>%
   mutate(rolling_rate_per_alldeaths=roll_mean(deaths,n=7,align="center",fill=NA)) %>% ungroup()  
 
 # lineplots
-df_deaths <- left_join(deaths_age,ons_all_age_groups_uk_england_2019 %>% select(!UK),by="age") %>% 
+df_deaths <- left_join(deaths_age,ons_all_age_groups_uk_england_2019 %>% select(!c(UK,London)),by="age") %>% 
   rename(population=England) %>% mutate(age_uplim=as.numeric(gsub("^.*_","",age)),
             age_grp=ifelse(age_uplim<=49,"00_49",ifelse(age_uplim>=49&age_uplim<=59,"50_59",age)),
             age_grp=ifelse(grepl("\\+",age),age,age_grp)) %>% filter(!age %in% c("00_59","60+")) %>% 
