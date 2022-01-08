@@ -313,43 +313,44 @@ for (k_start in start_dates) {
 
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
-# hospital admissions by age
-# hosp_url<-"https://api.coronavirus.data.gov.uk/v2/data?areaType=region&areaCode=E12000007&metric=cumAdmissionsByAge&format=csv"
-# eng_hosp_age_data <- read_csv(hosp_url) %>% group_by(age) %>% 
-#   mutate(`new admissions`=roll_mean(value-lag(value,n=1,order_by=date),n=7,align="center",fill=NA),
-#          rate_chng=rate-lag(rate,n=1,order_by=date),
-#          rate_chng_smooth=roll_mean(rate_chng,n=7,align="center",fill=NA),
-#          age=factor(age,levels=c("0_to_5", "6_to_17","18_to_64","65_to_84","85+")))
-# # plot
-# # start_dates <- c("2020-12-01","2021-07-01")
-# for (k_start in start_dates) {
-#   for (k_set in 1:nrow(plot_settings)) {
-#     p<-ggplot(eng_hosp_age_data %>% filter(date>as.Date(k_start)),
-#               aes(x=date,y=rate_chng_smooth*10,color=age)) + geom_line(size=1.3) + 
-#       # geom_hline(aes(yintercept=max(rate_chng_smooth)),color="red") + 
-#       scale_x_date(expand=expansion(0.02,0),date_breaks="1 month") + 
-#       xlab("") + ylab("7-day average of admissions per MILLION population") + 
-#       theme_bw() + standard_theme + theme(strip.text=element_text(size=14),panel.grid.minor.y=element_blank()); p
-#     
-#     if (plot_settings[k_set,1]=="log") { 
-#       log_breaks <- 2^(-4:10); if (k_set==5 & k_start>ymd("2021-01-01")) {log_breaks=round(2^seq(-4,10,by=1/2),1) }
-#       p<-p+scale_y_log10(expand=expansion(0.03,0), breaks=log_breaks) } else {
-#         p <- p + scale_y_continuous() }
-#     # sapply(seq(-2,4,1/2),function(x) round(10^x,ifelse(x<0,round(x+3),1)))
-#     if (plot_settings[k_set,3]=="facet"){
-#       if (plot_settings[k_set,2]=="fixed") { p<-p+facet_wrap(~age,scales="fixed") } else {
-#         p <- p + facet_wrap(~age,scales="free_y") }}
-#     p; print(plot_settings[k_set,])
-#     # SAVE
-#     foldername<-paste0("london/cases_hosp_deaths_from_",gsub("-","_",as.character(k_start)),"/")
-#     if (!dir.exists(foldername)) {dir.create(foldername)}
-#     filename<-paste0("london_admissions_by_age",
-#                      ifelse(grepl("log",p$scales$scales[[2]]$trans$name),"_log","_linear"),
-#                      ifelse(class(p$facet)[1]=="FacetNull","_nofacet",""),
-#                      ifelse(plot_settings[k_set,2]=="fixed","_yfixed",""), ".png")
-#     ggsave(paste0(foldername,filename),width=34,height=22,units="cm")
-#   }
-# }
+# HOSPITAL ADMISSIONS by age
+hosp_url<-"https://api.coronavirus.data.gov.uk/v2/data?areaType=nhsRegion&areaCode=E40000003&metric=cumAdmissionsByAge&format=csv"
+# "https://api.coronavirus.data.gov.uk/v2/data?areaType=region&areaCode=E12000007&metric=cumAdmissionsByAge&format=csv"
+lnd_hosp_age_data <- read_csv(hosp_url) %>% group_by(age) %>%
+  mutate(`new admissions`=roll_mean(value-lag(value,n=1,order_by=date),n=7,align="center",fill=NA),
+         rate_chng=rate-lag(rate,n=1,order_by=date),
+         rate_chng_smooth=roll_mean(rate_chng,n=7,align="center",fill=NA),
+         age=factor(age,levels=c("0_to_5", "6_to_17","18_to_64","65_to_84","85+")))
+# plot
+# start_dates <- c("2020-12-01","2021-07-01")
+for (k_start in start_dates) {
+  for (k_set in 1:nrow(plot_settings)) {
+    p<-ggplot(lnd_hosp_age_data %>% filter(date>as.Date(k_start)),
+              aes(x=date,y=rate_chng_smooth*10,color=age)) + geom_line(size=1.3) +
+      # geom_hline(aes(yintercept=max(rate_chng_smooth)),color="red") +
+      scale_x_date(expand=expansion(0.02,0),date_breaks="1 month") +
+      xlab("") + ylab("7-day average of admissions per MILLION population") +
+      theme_bw() + standard_theme + theme(strip.text=element_text(size=14),panel.grid.minor.y=element_blank()); p
+
+    if (plot_settings[k_set,1]=="log") {
+      log_breaks <- 2^(-4:10); if (k_set==5 & k_start>ymd("2021-01-01")) {log_breaks=round(2^seq(-4,10,by=1/2),1) }
+      p<-p+scale_y_log10(expand=expansion(0.03,0), breaks=log_breaks) } else {
+        p <- p + scale_y_continuous() }
+    # sapply(seq(-2,4,1/2),function(x) round(10^x,ifelse(x<0,round(x+3),1)))
+    if (plot_settings[k_set,3]=="facet"){
+      if (plot_settings[k_set,2]=="fixed") { p<-p+facet_wrap(~age,scales="fixed") } else {
+        p <- p + facet_wrap(~age,scales="free_y") }}
+    p; print(plot_settings[k_set,])
+    # SAVE
+    foldername<-paste0("london/cases_hosp_deaths_from_",gsub("-","_",as.character(k_start)),"/")
+    if (!dir.exists(foldername)) {dir.create(foldername)}
+    filename<-paste0("london_admissions_by_age",
+                     ifelse(grepl("log",p$scales$scales[[2]]$trans$name),"_log","_linear"),
+                     ifelse(class(p$facet)[1]=="FacetNull","_nofacet",""),
+                     ifelse(plot_settings[k_set,2]=="fixed","_yfixed",""), ".png")
+    ggsave(paste0(foldername,filename),width=34,height=22,units="cm")
+  }
+}
 
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### 
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### 
