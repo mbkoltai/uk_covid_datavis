@@ -2,7 +2,8 @@ The script [datavis.R](https://github.com/mbkoltai/uk_covid_datavis/blob/master/
 The script [london_datavis.R](https://github.com/mbkoltai/uk_covid_datavis/blob/master/london_datavis.R) does the same for London.
 ONS population denominators are used instead of NIMS for vaccine coverage, the ONS data files are [here](https://github.com/mbkoltai/uk_covid_datavis/blob/master/ONS_2019_midpoint_population_estim_modified.csv) and [here](https://github.com/mbkoltai/uk_covid_datavis/blob/master/ons_all_age_groups_uk_england_2019.csv).
 
-## England COVID-19: Vaccine rollout, cases, hospitalisations, deaths
+
+## England COVID-19: Vaccine rollout, cases, hospital admissions, deaths
 
 
 | Data type           | Metric                                     | Facet/group by                   | Lin/log | Y-scale    | Link | comment         |
@@ -27,7 +28,7 @@ ONS population denominators are used instead of NIMS for vaccine coverage, the O
 
 ****
 
-## London COVID-19: Vaccine rollout, cases, deaths
+## London COVID-19: Vaccine rollout, cases, hospital admissions, deaths
 
 | Data type | Metric | Facet/group by | Lin/log | Y-scale    | Link | comment         |
   |---------------------|--------------------------------------------|--------------------------------------|---------|------------|---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------|
