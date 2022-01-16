@@ -12,9 +12,11 @@ standard_theme=theme(plot.title=element_text(hjust=0.5,size=16),
 
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
-# # population data
+# ONS population data
 ONS_2019_population_estim <- read_csv("ONS_2019_midpoint_population_estim_modified.csv")
 ons_all_age_groups_uk_england_2019 <- read_csv("ons_all_age_groups_uk_england_2019.csv")
+
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 # vacc uptake
 url_data<-
@@ -133,8 +135,8 @@ ggsave(paste0(vaccine_folder,"vaccine_by_age_rate_absnum_lin.png"),width=45,heig
 df_plot <- vacc_dose_data_eng %>% filter(date>as.Date("2020-12-14")) %>% mutate(age=gsub("_","-",age)) %>%
   select(matches("date|daily|cumVaccinationFirst|cumVaccinationComplete|age",ignore.case=F) &
            !matches("complete")) %>%
-  pivot_longer(!c(date,date_numeric,age)) %>% mutate(dose=ifelse(grepl("first|First",name),"first",
-                                                                 ifelse(grepl("second|Second",name),"second","third")),
+  pivot_longer(!c(date,date_numeric,age)) %>% 
+  mutate(dose=ifelse(grepl("first|First",name),"first", ifelse(grepl("second|Second",name),"second","third")),
                                                      type=ifelse(grepl("daily",name),"rate","cumul")) %>%
   select(!c(name)) %>% pivot_wider(names_from=type) %>% filter(cumul>0.5) %>%
   group_by(age,dose) %>% mutate(start_date=min(date) ) %>% ungroup() %>%
@@ -201,11 +203,12 @@ ggplot(vacc_dose_data_eng_totals) + #  %>% filter(!grepl("cumul",dose))
 ggsave(paste0(vaccine_folder,"vaccine_allage_phaseportrait_3rows.png"),width=35,height=32,units="cm")
 
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### 
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### 
 # CASES 
+
 url_cases_age="https://api.coronavirus.data.gov.uk/v2/data?areaType=region&areaCode=E12000007&metric=newCasesBySpecimenDateAgeDemographics&format=csv"
 # c(1:5,6:9,10:14,15:19)
-lnd_case_age_data <- read_csv(url_cases_age)
-lnd_case_age_data <- lnd_case_age_data %>% filter(!age %in% c("unassigned","00_59","60+")) %>% 
+lnd_case_age_data <- read_csv(url_cases_age) %>% filter(!age %in% c("unassigned","00_59","60+")) %>% 
   mutate(age_num=as.numeric(factor(age)), 
          age_categ=case_when(age_num<=5 ~ "0-24",age_num>=6&age_num<=10 ~ "25-49",
                              age_num>=11 & age_num<=15 ~ "50-74", age_num>15 ~ "75+"),
@@ -216,6 +219,8 @@ agegr_names=gsub("09","9",gsub("04","4",gsub("^0","",gsub("_","-",unique(lnd_cas
 l_num=lapply(1:4, function(x) (x-1)*5+1:5); l_num[[4]]=l_num[[4]][1:4]; 
 agegr_names=paste0(unlist(lapply(l_num, function(x) 
   paste0("[",paste0(agegr_names[x],collapse=","),"]"))),collapse=", ")
+
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### 
 # PLOT CHANGE in RATES
 start_date<-as.Date("2021-11-01")
 ggplot(lnd_case_age_data %>% filter(date>start_date),
@@ -231,124 +236,165 @@ ggplot(lnd_case_age_data %>% filter(date>start_date),
 # save
 ggsave(paste0("london/london_cases_age_4groups_rollingsum_change.png"),width=34,height=22,units="cm")
 
-###################################################
-# ABSOLUTE NUMBER of cases in 10-year bands
-start_date<-"2021-10-01"
-for (k_plot in 1:3){
-  df_plot <- lnd_case_age_data %>% mutate(ten_year_band_num=round(as.numeric(strsplit(age,"_")[[1]][2])/10)*10,
-                                          ten_year_band_num=ifelse(is.na(ten_year_band_num),90,ten_year_band_num),
-                                          ten_year_band=ifelse(ten_year_band_num-5<0,"<5",paste0(ten_year_band_num-5,"_",ten_year_band_num+4))) %>%
-    mutate(ten_year_band=ifelse(is.na(ten_year_band)|grepl("85",ten_year_band),">85",ten_year_band)) %>%
-    group_by(date,ten_year_band) %>% 
-    summarise(rollingSum=sum(rollingSum)/7,ten_year_band_num=unique(ten_year_band_num)/10) %>% 
-    mutate(ten_year_band_num=ifelse(is.na(ten_year_band_num),9,ten_year_band_num)+1,
-           age_meta=round((ten_year_band_num+0.9)/2)) %>% ungroup() %>% arrange(date,ten_year_band_num) %>% 
-    mutate(ten_year_band=factor(ten_year_band,levels=unique(ten_year_band))) %>% group_by(age_meta,date) %>% 
-    mutate(order_within=c("lower","higher")[row_number()],
-           age_meta_name=paste0("[",paste0(ten_year_band,collapse=", "),"]",sep="")) %>% 
-    filter(date>as.Date(start_date)) %>% ungroup()
-  # PLOT  
-  p <- ggplot(df_plot) + geom_line(aes(x=date,y=rollingSum,color=order_within),size=1.1) +
-    geom_point(data=df_plot %>% filter(date>max(date)-8),aes(x=date,y=rollingSum,color=order_within),size=1.5,shape=21) +
-    facet_wrap(~age_meta_name,nrow=2,scales=ifelse(k_plot==1,"free_y","fixed")) + 
-    scale_x_date(expand=expansion(0.02,0),breaks="1 week") + 
-    theme_bw() + standard_theme + theme(axis.text.x=element_text(size=12),axis.text.y=element_text(size=12),
-                                        strip.text=element_text(size=17),legend.title=element_blank(),legend.text=element_text(size=17),
-                                        axis.title.y=element_text(size=19),plot.caption=element_text(size=12),panel.grid.minor.y=element_blank()) + 
-    xlab("") + ylab("cases")
-  if (k_plot %in% c(1,3)){p <- p + scale_y_log10(breaks=round(2^seq(3,15,by=ifelse(k_plot==1,1/2,1)))) } else { 
-    p<-p+scale_y_continuous(breaks=(0:16)*2e3) } # sapply(10^seq(1,4,by=1/4),function(x) round(x,max(3-round(log(x)),0)))
-  p
-  # SAVE # 
-  ggsave(paste0("london/london_cases_number_10_yr_agebands_y",
-                ifelse(grepl("log",p$scales$scales[[2]]$trans$name),"_log","_lin"),
-                ifelse(k_plot>1,"_fixed","_free"),
-                ".png",collapse=""),width=36,height=22,units="cm")
-}
-
 ######################################################
 # RATE of CASES in 10-yr bands
-df_cases<-left_join(lnd_case_age_data,ons_all_age_groups_uk_england_2019,by="age") %>% 
+df_cases <- left_join(lnd_case_age_data,ons_all_age_groups_uk_england_2019,by="age") %>% 
   select(!c(UK,England,areaCode,areaType,age_categ,areaName)) %>% rename(population=London) %>% 
   ungroup() %>% mutate(age_num=as.numeric(factor(age)),
                        meta_age=ifelse(ceiling(age_num/2)>8,9,ceiling(age_num/2))) %>% 
   group_by(date,meta_age) %>% 
-  summarise(rollingSum=sum(rollingSum),population=sum(population),min_age=unique(age)[1],
+  summarise(cases=sum(cases),rollingSum=sum(rollingSum),population=sum(population),min_age=unique(age)[1],
             max_age=unique(age)[length(unique(age))]) %>%
   mutate(age=paste0(substr(min_age,1,3),
                     ifelse(is.na(max_age),"",gsub("_","",substr(max_age,nchar(max_age)-2,nchar(max_age)))) ),
-         age=ifelse(meta_age==max(meta_age),"80+",age),rollingRate=1e6*rollingSum/(7*population))
+         age=ifelse(meta_age==max(meta_age),"80+",age),rollingRate=1e6*rollingSum/(7*population), rolling_number=rollingSum/7)
 
 # plot CASE RATES in 10-yr groups
-plot_settings<-expand.grid(list(c("log","linear"),c("fixed","free"),c("nofacet","facet"))) %>% 
-  rename(y_scale=Var1,y_range=Var2,faceting=Var3) %>% filter(!(faceting=="nofacet" & y_range=="fixed"))
-start_dates <- c("2020-12-01","2021-07-01")
+plot_settings <- expand.grid(list(c("log","linear"),c("fixed","free"),c("nofacet","facet"))) %>% 
+  rename(y_scale=Var1,y_range=Var2,faceting=Var3) %>% 
+  filter(!((faceting=="nofacet" & y_range=="fixed") | (faceting=="facet" & y_range=="fixed" & y_scale=="linear")) )
+
+start_dates <- c("2020-12-01","2021-10-01")
 # LOOP
 for (k_start in start_dates) {
   for (k_set in 1:nrow(plot_settings)) {
-    p <- ggplot(df_cases %>% filter(date>as.Date(k_start)), aes(x=date,y=rollingRate,color=age)) + 
-      geom_line(size=1.1) +   # facet_wrap(~age) + #  ,scales="free_y"
-      scale_x_date(expand=expansion(0.02,0),date_breaks="1 month") + theme_bw() + standard_theme + xlab("") + 
-      ylab("7-day average of CASES per MILLION population") + 
-      theme(strip.text=element_text(size=14),panel.grid.minor.y=element_blank()) # panel.grid.minor.x=element_line(linetype="dashed"),
-    if (plot_settings[k_set,1]=="log") { 
-      log_breaks <- 2^(-5:14); if (k_set==5 & k_start>ymd("2021-01-01")) {log_breaks=round(2^seq(-5,14,by=1/2)) }
-      p<-p+scale_y_log10(expand=expansion(0.03,0),breaks=log_breaks ) } 
-    else { p <- p + scale_y_continuous() } # sapply(seq(-2,4,1/2),function(x) round(10^x,ifelse(x<0,round(x+3),1)))
-    if (plot_settings[k_set,3]=="facet"){
-      if (plot_settings[k_set,2]=="fixed") { p<-p+facet_wrap(~age,scales="fixed") } else {
-        p <- p + facet_wrap(~age,scales="free_y") }}
-    p
-    # save
-    print(plot_settings[k_set,])
-    foldername<-paste0("london/cases_hosp_deaths_from_",gsub("-","_",as.character(k_start)),"/")
-    if (!dir.exists(foldername)) {dir.create(foldername)}
-    filename<-paste0("london_cases_by_age_lineplot",
-                     ifelse(grepl("log",p$scales$scales[[2]]$trans$name),"_log","_linear"),
-                     ifelse(class(p$facet)[1]=="FacetNull","_nofacet",""),
-                     ifelse(plot_settings[k_set,2]=="fixed","_yfixed",""), ".png")
-    ggsave(paste0(foldername,filename),width=34,height=22,units="cm")
+    for (k_var in c("rollingRate","rolling_number")) {
+      for (k_norm in c("norm","absval")) {
+        
+        if (k_var=="rollingRate") {k_norm<-"absval"} 
+        if (grepl("norm",k_norm)) { 
+          df_plot <- df_cases %>% group_by(age) %>% 
+            mutate(rollingRate=rollingRate/max(rollingRate[date<as.Date("2021-02-01")],na.rm=T),
+                   rolling_number=rolling_number/max(rolling_number[date<as.Date("2021-02-01")],na.rm=T)) %>%
+            filter(date>as.Date(k_start)) }  else {
+              df_plot <- df_cases %>% filter(date>as.Date(k_start)) }
+        
+        p <- ggplot(df_plot) + # geom_line(aes(x=date,y=rollingRate,color=age),size=1.1) + 
+          scale_x_date(expand=expansion(0.02,0),date_breaks="2 weeks") +
+          theme_bw() + standard_theme + theme(strip.text=element_text(size=14),panel.grid.minor.y=element_blank()) +
+          xlab("") + ylab(paste0("cases (7-day smoothed)",ifelse(grepl("Rate",k_var)," per MILLION population",""),
+                                 ifelse(grepl("norm",k_norm)," (normalised to Jan/2021 peak)",""))) 
+        max_date <- max(df_plot$date)
+        if (plot_settings[k_set,1]=="log") { 
+          log_breaks <- 2^(-4:12); if (k_set==5 & k_start>ymd("2021-01-01")) {log_breaks=round(2^seq(-4.5,12,by=1/2),3) }
+          p<-p+scale_y_log10(expand=expansion(0.03,0), breaks=log_breaks ) 
+        } else {
+          p <- p + scale_y_continuous() }
+        if (k_set>=3){ # faceted
+          p <- p + geom_line(aes(x=date,y=get(k_var)))
+          if (plot_settings[k_set,2]=="fixed") { p <- p + facet_wrap(~age,scales="fixed") 
+          } else {  p <- p + facet_wrap(~age,scales="free_y") } 
+          # if (!grepl("norm",k_norm)) { 
+          #   p <- p + geom_point(data=df_plot %>% filter(date>=max_date-6),aes(x=date,y=cases),shape=21) +
+          #     geom_line(data=df_plot %>% filter(date>=max_date-6),aes(x=date,y=cases),size=1/2,linetype="dashed") }
+        } else { # not faceted
+          p <- p + geom_line(aes(x=date,y=get(k_var),color=age),size=1.05)  
+          # last few values
+          # if (!grepl("norm",k_norm)) { 
+          #   p <- p + geom_point(data=df_plot %>% filter(date>=max_date-6),aes(x=date,y=cases,color=age),shape=21) + 
+          #     geom_line(data=df_plot %>% filter(date>=max_date-6),aes(x=date,y=cases,color=age),size=1/2,linetype="dashed")
+          # }
+        }
+        # if normalised, horiz line at 1
+        if (grepl("norm",k_norm)) {p <- p+geom_hline(yintercept=1,size=1/2,linetype="dashed")}
+        p
+        # save
+        foldername<-paste0("london/cases_hosp_deaths_from_",gsub("-","_",as.character(k_start)),"/")
+        if (!dir.exists(foldername)) {dir.create(foldername)}
+        filename<-paste0("london_cases_by_age_lineplot",
+                         ifelse(grepl("log",p$scales$scales[[2]]$trans$name),"_log","_linear"),
+                         ifelse(class(p$facet)[1]=="FacetNull","_nofacet",""),
+                         ifelse(plot_settings[k_set,2]=="fixed","_yfixed",""),
+                         ifelse(grepl("Rate",k_var),"_rate","_absnum"),
+                         ifelse(grepl("norm",k_norm),"_peak_norm",""),".png")
+        ggsave(paste0(foldername,filename),width=34,height=22,units="cm")
+        print(paste0(filename," (",k_start,")"))
+      }
+    }
   }
 }
 
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
+### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ### ###
 # HOSPITAL ADMISSIONS by age
+
 hosp_url<-"https://api.coronavirus.data.gov.uk/v2/data?areaType=nhsRegion&areaCode=E40000003&metric=cumAdmissionsByAge&format=csv"
-# "https://api.coronavirus.data.gov.uk/v2/data?areaType=region&areaCode=E12000007&metric=cumAdmissionsByAge&format=csv"
 lnd_hosp_age_data <- read_csv(hosp_url) %>% group_by(age) %>%
-  mutate(`new admissions`=roll_mean(value-lag(value,n=1,order_by=date),n=7,align="center",fill=NA),
-         rate_chng=rate-lag(rate,n=1,order_by=date),
-         rate_chng_smooth=roll_mean(rate_chng,n=7,align="center",fill=NA),
+  mutate(admissions=value-lag(value,n=1,order_by=date),admissions_smooth=roll_mean(admissions,n=7,align="center",fill=NA),
+         rate_per_pop=rate-lag(rate,n=1,order_by=date),
+         rate_per_pop_smooth=roll_mean(rate_per_pop,n=7,align="center",fill=NA),
          age=factor(age,levels=c("0_to_5", "6_to_17","18_to_64","65_to_84","85+")))
 # plot
 # start_dates <- c("2020-12-01","2021-07-01")
-for (k_start in start_dates) {
-  for (k_set in 1:nrow(plot_settings)) {
-    p<-ggplot(lnd_hosp_age_data %>% filter(date>as.Date(k_start)),
-              aes(x=date,y=rate_chng_smooth*10,color=age)) + geom_line(size=1.3) +
-      # geom_hline(aes(yintercept=max(rate_chng_smooth)),color="red") +
-      scale_x_date(expand=expansion(0.02,0),date_breaks="1 month") +
-      xlab("") + ylab("7-day average of admissions per MILLION population") +
-      theme_bw() + standard_theme + theme(strip.text=element_text(size=14),panel.grid.minor.y=element_blank()); p
+hosp_varnames<-c("admissions","rate_per_pop")
+k_start <- as.Date("2021-10-01")
 
-    if (plot_settings[k_set,1]=="log") {
-      log_breaks <- 2^(-4:10); if (k_set==5 & k_start>ymd("2021-01-01")) {log_breaks=round(2^seq(-4,10,by=1/2),1) }
-      p<-p+scale_y_log10(expand=expansion(0.03,0), breaks=log_breaks) } else {
-        p <- p + scale_y_continuous() }
-    # sapply(seq(-2,4,1/2),function(x) round(10^x,ifelse(x<0,round(x+3),1)))
-    if (plot_settings[k_set,3]=="facet"){
-      if (plot_settings[k_set,2]=="fixed") { p<-p+facet_wrap(~age,scales="fixed") } else {
-        p <- p + facet_wrap(~age,scales="free_y") }}
-    p; print(plot_settings[k_set,])
-    # SAVE
-    foldername<-paste0("london/cases_hosp_deaths_from_",gsub("-","_",as.character(k_start)),"/")
-    if (!dir.exists(foldername)) {dir.create(foldername)}
-    filename<-paste0("london_admissions_by_age",
-                     ifelse(grepl("log",p$scales$scales[[2]]$trans$name),"_log","_linear"),
-                     ifelse(class(p$facet)[1]=="FacetNull","_nofacet",""),
-                     ifelse(plot_settings[k_set,2]=="fixed","_yfixed",""), ".png")
-    ggsave(paste0(foldername,filename),width=34,height=22,units="cm")
+for (k_var in hosp_varnames) {
+  for (k_set in 1:nrow(plot_settings)) {
+    for (k_norm in c("abs_val","norm")) {
+      
+      if (k_var=="rate_per_pop") { k_norm<-"abs_val"}
+      
+      varname<-k_var; smooth_varname<-paste0(varname,"_smooth"); colorvar<-"age"
+      max_date<-max((lnd_hosp_age_data %>% filter(date>as.Date(k_start)))$date)
+      # normalise to peak
+      if (grepl("norm",k_norm)) { 
+        df_plot <- lnd_hosp_age_data %>% group_by(age) %>% 
+          mutate(admissions=admissions/max(admissions[date<as.Date("2021-02-01")],na.rm=T),
+                 admissions_smooth=admissions_smooth/max(admissions_smooth[date<as.Date("2021-02-01")],na.rm=T),
+                 rate_per_pop=rate_per_pop/max(rate_per_pop[date<as.Date("2021-02-01")],na.rm=T),
+                 rate_per_pop_smooth=rate_per_pop_smooth/max(rate_per_pop_smooth[date<as.Date("2021-02-01")],na.rm=T) ) %>%
+                 filter(date>as.Date(k_start)) } else {
+             df_plot <- lnd_hosp_age_data %>% filter(date>as.Date(k_start)) }
+      
+      p <- ggplot(df_plot, aes(x=date)) + 
+        scale_x_date(expand=expansion(0.02,0),date_breaks=ifelse(k_start>as.Date("2021-01-31"),"2 weeks","1 month")) + xlab("") + 
+        ylab(paste0("Hospital admissions",ifelse(grepl("rate",k_var)," per MILLION population",""),
+                    ifelse(grepl("norm",k_norm)," (normalised to Jan/2021 peak)","")) ) + 
+        labs(color="") + theme_bw() + standard_theme + theme(strip.text=element_text(size=14),panel.grid.minor.y=element_blank()) 
+      
+      if (plot_settings[k_set,1]=="log") {
+        log_breaks <- 2^(-4:10); if (k_set==5 & k_start>ymd("2021-01-01")) { log_breaks<-round(2^seq(-4,10,by=1/2),1) }
+        p <- p + scale_y_log10(expand=expansion(0.03,0), breaks=log_breaks) } else { p <- p + scale_y_continuous() }
+      if (plot_settings[k_set,3]=="facet"){
+        if (plot_settings[k_set,2]=="fixed") { p <- p + facet_wrap(~age,scales="fixed") } else {
+          p <- p + facet_wrap(~age,scales="free_y") }}
+      if (k_set>=3) {
+        p <- p + geom_line(aes(y=get(smooth_varname)*ifelse(grepl("rate",varname)&!grepl("norm",k_norm),10,1)),
+                    show.legend=ifelse(k_set>2,F,T)) + theme(legend.position=NULL) 
+        if (!grepl("norm",k_norm)) {
+          p <- p + geom_point(data=df_plot %>% filter(max_date-7<=date),
+                     aes(y=get(varname)*ifelse(grepl("rate",varname)&!grepl("norm",k_norm),10,1)),
+                     shape=21,show.legend=F,size=1) +
+            geom_line(data=df_plot %>% filter(max_date-7<=date),
+                      aes(y=get(varname)*ifelse(grepl("rate",varname)&!grepl("norm",k_norm),10,1)),
+                      size=1/3,linetype="dashed",show.legend=F)
+        }
+      } else {
+        p <- p + geom_line(aes(y=get(smooth_varname)*ifelse(grepl("rate",varname)&!grepl("norm",k_norm),10,1),color=get(colorvar)),
+                           show.legend=ifelse(k_set>2,F,T))  
+        if (!grepl("norm",k_norm)) {
+          p <- p + geom_point(data=df_plot %>% filter(max_date-7<=date),
+                     aes(y=get(varname)*ifelse(grepl("rate",varname) & !grepl("norm",k_norm),10,1),color=get(colorvar)),
+                     shape=21,show.legend=F,size=1) + 
+            geom_line(data=df_plot %>% filter(max_date-7<=date),
+                      aes(y=get(varname)*ifelse(grepl("rate",varname)&!grepl("norm",k_norm),10,1),color=get(colorvar)),
+                      size=1/3,linetype="dashed",show.legend=F)
+          }
+        }
+      if (grepl("norm",k_norm)) {p <- p+geom_hline(yintercept=1,size=1/2,linetype="dashed")}
+      p; print(plot_settings[k_set,])
+      # SAVE
+      foldername<-paste0("london/cases_hosp_deaths_from_",gsub("-","_",as.character(k_start)),"/")
+      if (!dir.exists(foldername)) {dir.create(foldername)}
+      filename<-paste0("london_admissions_by_age",ifelse(grepl("rate",k_var),"_rate","_absnum"),
+                       ifelse(grepl("log",p$scales$scales[[2]]$trans$name),"_log","_linear"),
+                       ifelse(class(p$facet)[1]=="FacetNull","_nofacet",""),
+                       ifelse(plot_settings[k_set,2]=="fixed","_yfixed",""),
+                       ifelse(grepl("norm",k_norm),"_peak_norm",""), ".png")
+      ggsave(paste0(foldername,filename),width=34,height=22,units="cm")
+    }
   }
 }
 
@@ -363,39 +409,58 @@ deaths_age<-read_csv(death_url) %>% group_by(age) %>%
 
 # lineplots
 df_deaths <- left_join(deaths_age,ons_all_age_groups_uk_england_2019 %>% select(!c(UK,England)),by="age") %>% 
-  rename(population=London) %>% mutate(age_uplim=as.numeric(gsub("^.*_","",age)),
-                                        age_grp=ifelse(age_uplim<=49,"00_49",ifelse(age_uplim>=49&age_uplim<=59,"50_59",age)),
-                                        age_grp=ifelse(grepl("\\+",age),age,age_grp)) %>% filter(!age %in% c("00_59","60+")) %>% 
-  group_by(age_grp,date) %>%
-  summarise(rollingSum=sum(rollingSum),population=sum(population)) %>% ungroup() %>% 
+  rename(population=London) %>% 
+  mutate(age_uplim=as.numeric(gsub("^.*_","",age)),
+            age_grp=ifelse(age_uplim<=49,"00_49",ifelse(age_uplim>=49&age_uplim<=59,"50_59",age)),
+            age_grp=ifelse(grepl("\\+",age),age,age_grp)) %>% filter(!age %in% c("00_59","60+")) %>% 
+  group_by(age_grp,date) %>% summarise(deaths=sum(deaths),rollingSum=sum(rollingSum),population=sum(population)) %>% ungroup() %>% 
   mutate(agegrp_no=as.numeric(factor(age_grp)),meta_age=ifelse(agegrp_no==1,1, ceiling((agegrp_no+1)/2))) %>%
   group_by(date,meta_age) %>% 
-  summarise(rollingSum=sum(rollingSum),population=sum(population),min_age=unique(age_grp)[1],
+  summarise(deaths=sum(deaths),rollingSum=sum(rollingSum),population=sum(population),min_age=unique(age_grp)[1],
             max_age=ifelse(agegrp_no==1,unique(age_grp)[1],unique(age_grp)[2])) %>%
   mutate(age_grp=paste0(substr(min_age,1,3),gsub("_","",substr(max_age,nchar(max_age)-2,nchar(max_age)))),
-         rollingRate=1e6*rollingSum/(7*population))
+         rollingRate=1e6*rollingSum/(7*population),rolling_number=rollingSum/7)
 
 # plot DEATHS in 10-yr groups
-plot_settings<-expand.grid(list(c("log","linear"),c("fixed","free"),c("nofacet","facet"))) %>% 
-  rename(y_scale=Var1,y_range=Var2,faceting=Var3) %>% filter(!(faceting=="nofacet" & y_range=="fixed"))
-start_dates <- c("2020-12-01","2021-07-01")
+plot_settings <- expand.grid(list(c("log","linear"),c("fixed","free"),c("nofacet","facet"))) %>% 
+  rename(y_scale=Var1,y_range=Var2,faceting=Var3) %>% 
+  filter(!((faceting=="nofacet" & y_range=="fixed") | (faceting=="facet" & y_range=="fixed" & y_scale=="linear")) )
+
+
+start_dates <- c("2021-10-01")
 # LOOP
 for (k_start in start_dates) {
   for (k_set in 1:nrow(plot_settings)) {
-    p <- ggplot(df_deaths %>% filter(date>as.Date(k_start)), 
-                aes(x=date,y=rollingRate,color=age_grp)) + geom_line(size=1.1) + 
+    for (k_var in c("rollingRate","rolling_number")) {
+      for (k_norm in c("norm","absval")) {
+
+        if (k_var=="rollingRate") {k_norm<-"absval"} 
+        if (grepl("norm",k_norm)) { 
+          df_plot <- df_deaths %>% group_by(age_grp) %>% 
+            mutate(rollingRate=rollingRate/max(rollingRate[date<as.Date("2021-02-01")],na.rm=T),
+                   rolling_number=rolling_number/max(rolling_number[date<as.Date("2021-02-01")],na.rm=T)) %>%
+            filter(date>as.Date(k_start)) } 
+            else {
+              df_plot <- df_deaths %>% filter(date>as.Date(k_start)) }
+        
+    p <- ggplot(df_plot) + # geom_line(aes(x=date,y=rollingRate,color=age_grp),size=1.1) + 
       scale_x_date(expand=expansion(0.02,0),date_breaks="1 month") +
       theme_bw() + standard_theme + theme(strip.text=element_text(size=14),panel.grid.minor.y=element_blank()) +
-      xlab("") + ylab("7-day average of deaths per million population") 
+      xlab("") + ylab(paste0("deaths (7-day smoothed)",ifelse(grepl("Rate",k_var)," per MILLION population",""),
+                             ifelse(grepl("norm",k_norm)," (normalised to Jan/2021 peak)",""))) 
     
     if (plot_settings[k_set,1]=="log") { 
-      log_breaks <- 2^(-3:8); if (k_set==5 & k_start>ymd("2021-01-01")) {log_breaks=round(2^seq(-4.5,8,by=1/2),3) }
+      log_breaks <- 2^(-4:8); if (k_set==5 & k_start>ymd("2021-01-01")) {log_breaks=round(2^seq(-4.5,8,by=1/2),3) }
       p<-p+scale_y_log10(expand=expansion(0.03,0), breaks=log_breaks ) 
     } else {
       p <- p + scale_y_continuous() }
-    if (plot_settings[k_set,3]=="facet"){
-      if (plot_settings[k_set,2]=="fixed") { p<-p+facet_wrap(~age_grp,scales="fixed") } else {
-        p <- p + facet_wrap(~age_grp,scales="free_y") }}
+    if (k_set>=3){ # faceted
+      p <- p + geom_line(aes(x=date,y=get(k_var)))
+      if (plot_settings[k_set,2]=="fixed") { p <- p + facet_wrap(~age_grp,scales="fixed") 
+      } else {  p <- p + facet_wrap(~age_grp,scales="free_y") } 
+    } else { # not faceted
+      p <- p + geom_line(aes(x=date,y=get(k_var),color=age_grp),size=1.05)  }
+    if (grepl("norm",k_norm)) {p <- p+geom_hline(yintercept=1,size=1/2,linetype="dashed")}
     p
     # save
     foldername<-paste0("london/cases_hosp_deaths_from_",gsub("-","_",as.character(k_start)),"/")
@@ -403,10 +468,14 @@ for (k_start in start_dates) {
     filename<-paste0("london_deaths_by_age_lineplot",
                      ifelse(grepl("log",p$scales$scales[[2]]$trans$name),"_log","_linear"),
                      ifelse(class(p$facet)[1]=="FacetNull","_nofacet",""),
-                     ifelse(plot_settings[k_set,2]=="fixed","_yfixed",""),".png")
+                     ifelse(plot_settings[k_set,2]=="fixed","_yfixed",""),
+                     ifelse(grepl("Rate",k_var),"_rate","_absnum"),
+                     ifelse(grepl("norm",k_norm),"_peak_norm",""),".png")
     ggsave(paste0(foldername,filename),width=34,height=22,units="cm")
     print(paste0(filename," (",k_start,")"))
-  }
+      }
+      }
+    }
 }
 
 ##############################################
@@ -442,3 +511,38 @@ ggsave(paste0("london/cumul_deaths_by_age.png"),width=18,height=22,units="cm") #
 
 #
 unlink("Rplots.pdf")
+
+
+# ABSOLUTE NUMBER of cases in 10-year bands
+# start_date<-"2021-10-01"
+# for (k_plot in 1:3){
+#   df_plot <- lnd_case_age_data %>% mutate(ten_year_band_num=round(as.numeric(strsplit(age,"_")[[1]][2])/10)*10,
+#                                           ten_year_band_num=ifelse(is.na(ten_year_band_num),90,ten_year_band_num),
+#                                           ten_year_band=ifelse(ten_year_band_num-5<0,"<5",paste0(ten_year_band_num-5,"_",ten_year_band_num+4))) %>%
+#     mutate(ten_year_band=ifelse(is.na(ten_year_band)|grepl("85",ten_year_band),">85",ten_year_band)) %>%
+#     group_by(date,ten_year_band) %>% 
+#     summarise(rollingSum=sum(rollingSum)/7,ten_year_band_num=unique(ten_year_band_num)/10) %>% 
+#     mutate(ten_year_band_num=ifelse(is.na(ten_year_band_num),9,ten_year_band_num)+1,
+#            age_meta=round((ten_year_band_num+0.9)/2)) %>% ungroup() %>% arrange(date,ten_year_band_num) %>% 
+#     mutate(ten_year_band=factor(ten_year_band,levels=unique(ten_year_band))) %>% group_by(age_meta,date) %>% 
+#     mutate(order_within=c("lower","higher")[row_number()],
+#            age_meta_name=paste0("[",paste0(ten_year_band,collapse=", "),"]",sep="")) %>% 
+#     filter(date>as.Date(start_date)) %>% ungroup()
+#   # PLOT  
+#   p <- ggplot(df_plot) + geom_line(aes(x=date,y=rollingSum,color=order_within),size=1.1) +
+#     geom_point(data=df_plot %>% filter(date>max(date)-8),aes(x=date,y=rollingSum,color=order_within),size=1.5,shape=21) +
+#     facet_wrap(~age_meta_name,nrow=2,scales=ifelse(k_plot==1,"free_y","fixed")) + 
+#     scale_x_date(expand=expansion(0.02,0),breaks="1 week") + 
+#     theme_bw() + standard_theme + theme(axis.text.x=element_text(size=12),axis.text.y=element_text(size=12),
+#                                         strip.text=element_text(size=17),legend.title=element_blank(),legend.text=element_text(size=17),
+#                                         axis.title.y=element_text(size=19),plot.caption=element_text(size=12),panel.grid.minor.y=element_blank()) + 
+#     xlab("") + ylab("cases")
+#   if (k_plot %in% c(1,3)){p <- p + scale_y_log10(breaks=round(2^seq(3,15,by=ifelse(k_plot==1,1/2,1)))) } else { 
+#     p<-p+scale_y_continuous(breaks=(0:16)*2e3) } # sapply(10^seq(1,4,by=1/4),function(x) round(x,max(3-round(log(x)),0)))
+#   p
+#   # SAVE # 
+#   ggsave(paste0("london/london_cases_number_10_yr_agebands_y",
+#                 ifelse(grepl("log",p$scales$scales[[2]]$trans$name),"_log","_lin"),
+#                 ifelse(k_plot>1,"_fixed","_free"),
+#                 ".png",collapse=""),width=36,height=22,units="cm")
+# }
