@@ -14,7 +14,6 @@ ONS population denominators are used instead of NIMS for vaccine coverage, the O
   | Vaccines            | abs num doses per day per age group        | 5-yr age bands                       | log     | fixed      | [link](https://github.com/mbkoltai/uk_covid_datavis/raw/master/vaccine_data/vaccine_by_age_rate_absnum_log.png) |                 |
   | Vaccines            | % age group per day                        | 5-yr age bands                       | lin     | fixed      | [link](https://github.com/mbkoltai/uk_covid_datavis/raw/master/vaccine_data/vaccine_by_age_rate_lin.png)    |                 |
   | Vaccines            | **% age group per day**                        | 5-yr age bands                       | log     | fixed      | [link](https://raw.githubusercontent.com/mbkoltai/uk_covid_datavis/master/vaccine_data/vaccine_by_age_rate_log.png)   |                 |
-
   | Cases               | % change of weekly sum                     | 25-year age bands, grouped by 5 year | lin     | fixed      | [link](https://raw.githubusercontent.com/mbkoltai/uk_covid_datavis/master/england_cases_age_4groups_rollingsum_change.png)  |                 |
   | Cases               | absolute number                | 10-year age bands                    | lin/log | fixed/free |
   [linear_nofacet](https://raw.githubusercontent.com/mbkoltai/uk_covid_datavis/master/cases_hosp_deaths_from_2021_10_01/england_cases_by_age_lineplot_linear_nofacet_absnum.png)
