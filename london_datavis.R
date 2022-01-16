@@ -388,10 +388,11 @@ for (k_var in hosp_varnames) {
       # SAVE
       foldername<-paste0("london/cases_hosp_deaths_from_",gsub("-","_",as.character(k_start)),"/")
       if (!dir.exists(foldername)) {dir.create(foldername)}
-      filename<-paste0("london_admissions_by_age",ifelse(grepl("rate",k_var),"_rate","_absnum"),
+      filename<-paste0("london_admissions_by_age",
                        ifelse(grepl("log",p$scales$scales[[2]]$trans$name),"_log","_linear"),
                        ifelse(class(p$facet)[1]=="FacetNull","_nofacet",""),
                        ifelse(plot_settings[k_set,2]=="fixed","_yfixed",""),
+                       ifelse(grepl("rate",k_var),"_rate","_absnum"),
                        ifelse(grepl("norm",k_norm),"_peak_norm",""), ".png")
       ggsave(paste0(foldername,filename),width=34,height=22,units="cm")
     }
