@@ -275,11 +275,13 @@ for (k_start in start_dates) {
         p <- ggplot(df_plot) + # geom_line(aes(x=date,y=rollingRate,color=age),size=1.1) + 
           scale_x_date(expand=expansion(0.02,0),date_breaks="2 weeks") +
           theme_bw() + standard_theme + theme(strip.text=element_text(size=14),panel.grid.minor.y=element_blank()) +
-          xlab("") + ylab(paste0("cases (7-day smoothed)",ifelse(grepl("Rate",k_var)," per MILLION population",""),
-                                 ifelse(grepl("norm",k_norm)," (normalised to Jan/2021 peak)",""))) 
+          xlab("") + ylab(paste0(ifelse(grepl("rate",k_var),"Rate of cases","Number of cases"),
+                                 ifelse(grepl("rate",k_var)," per MILLION population",""),
+                                 ifelse(grepl("norm",k_norm)," RELATIVE to Jan/2021 peak","")) ) + 
+          ggtitle("England cases (by specimen date)")
         max_date <- max(df_plot$date)
         if (plot_settings[k_set,1]=="log") { 
-          log_breaks <- 2^(-4:12); if (k_set==5 & k_start>ymd("2021-01-01")) {log_breaks=round(2^seq(-4.5,12,by=1/2),3) }
+          log_breaks <- 2^(-4:14); if (k_set==5 & k_start>ymd("2021-01-01")) {log_breaks=round(2^seq(-4.5,14,by=1/2),3) }
           p<-p+scale_y_log10(expand=expansion(0.03,0), breaks=log_breaks ) 
         } else {
           p <- p + scale_y_continuous() }
@@ -333,7 +335,7 @@ eng_hosp_age_data <- read_csv(hosp_url) %>% group_by(age) %>%
 # plot
 # start_dates <- c("2020-12-01","2021-07-01")
 k_start<-"2021-10-01"
-
+hosp_varnames <- c("admissions","rate_per_pop")
 for (k_var in hosp_varnames) {
   for (k_set in 1:nrow(plot_settings)) {
     for (k_norm in c("abs_val","norm")) {
@@ -354,15 +356,17 @@ for (k_var in hosp_varnames) {
       
       p <- ggplot(df_plot, aes(x=date)) + 
         scale_x_date(expand=expansion(0.02,0),date_breaks=ifelse(k_start>as.Date("2021-01-31"),"2 weeks","1 month")) + xlab("") + 
-        ylab(paste0("Hospital admissions",ifelse(grepl("rate",k_var)," per MILLION population",""),
-                    ifelse(grepl("norm",k_norm)," (normalised to Jan/2021 peak)","")) ) + 
-        labs(color="") + theme_bw() + standard_theme + theme(strip.text=element_text(size=14),panel.grid.minor.y=element_blank()) 
+        ylab(paste0(ifelse(grepl("rate",k_var),"Rate of admissions","Number of admissions"),
+                    ifelse(grepl("rate",k_var)," per MILLION population",""),
+                    ifelse(grepl("norm",k_norm)," RELATIVE to Jan/2021 peak","")) ) + labs(color="") +
+        theme_bw() + standard_theme + theme(strip.text=element_text(size=14),panel.grid.minor.y=element_blank()) +
+        ggtitle("England COVID-19 hospital admission")
       
       if (plot_settings[k_set,1]=="log") {
         log_breaks <- 2^(-4:10); if (k_set==5 & k_start>ymd("2021-01-01")) { log_breaks<-round(2^seq(-4,10,by=1/2),1) }
         p <- p + scale_y_log10(expand=expansion(0.03,0), breaks=log_breaks) } else { p <- p + scale_y_continuous() }
       if (plot_settings[k_set,3]=="facet"){
-        if (plot_settings[k_set,2]=="fixed") { p <- p + facet_wrap(~age,scales="fixed") } else {
+        if (plot_settings[k_set,2]=="fixed") {  p <- p + facet_wrap(~age,scales="fixed") } else {
           p <- p + facet_wrap(~age,scales="free_y") }}
       if (k_set>=3) {
         p <- p + geom_line(aes(y=get(smooth_varname)*ifelse(grepl("rate",varname)&!grepl("norm",k_norm),10,1)),
@@ -373,11 +377,11 @@ for (k_var in hosp_varnames) {
                               shape=21,show.legend=F,size=1) +
             geom_line(data=df_plot %>% filter(max_date-7<=date),
                       aes(y=get(varname)*ifelse(grepl("rate",varname)&!grepl("norm",k_norm),10,1)),
-                      size=1/3,linetype="dashed",show.legend=F)
+                      size=1/3,linetype="dashed",show.legend=F) + ggtitle("England COVID-19 hospital admissions")
         }
       } else {
         p <- p + geom_line(aes(y=get(smooth_varname)*ifelse(grepl("rate",varname)&!grepl("norm",k_norm),10,1),color=get(colorvar)),
-                           show.legend=ifelse(k_set>2,F,T))  
+                           show.legend=ifelse(k_set>2,F,T),size=1.02)
         if (!grepl("norm",k_norm)) {
           p <- p + geom_point(data=df_plot %>% filter(max_date-7<=date),
                               aes(y=get(varname)*ifelse(grepl("rate",varname) & !grepl("norm",k_norm),10,1),color=get(colorvar)),
@@ -450,8 +454,10 @@ for (k_start in start_dates) {
         p <- ggplot(df_plot) + # geom_line(aes(x=date,y=rollingRate,color=age_grp),size=1.1) + 
           scale_x_date(expand=expansion(0.02,0),date_breaks="1 month") +
           theme_bw() + standard_theme + theme(strip.text=element_text(size=14),panel.grid.minor.y=element_blank()) +
-          xlab("") + ylab(paste0("deaths (7-day smoothed)",ifelse(grepl("Rate",k_var)," per MILLION population",""),
-                                 ifelse(grepl("norm",k_norm)," (normalised to Jan/2021 peak)",""))) 
+          xlab("") + ylab(paste0(ifelse(grepl("rate",k_var),"Rate of deaths","Number of deaths"),
+                                 ifelse(grepl("rate",k_var)," per MILLION population",""),
+                                 ifelse(grepl("norm",k_norm)," RELATIVE to Jan/2021 peak","")) ) + 
+          ggtitle("England COVID-19 deaths (by date of death)")
         
         if (plot_settings[k_set,1]=="log") { 
           log_breaks <- 2^(-4:8); if (k_set==5 & k_start>ymd("2021-01-01")) {log_breaks=round(2^seq(-4.5,8,by=1/2),3) }

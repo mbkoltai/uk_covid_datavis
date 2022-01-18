@@ -272,8 +272,9 @@ for (k_start in start_dates) {
         p <- ggplot(df_plot) + # geom_line(aes(x=date,y=rollingRate,color=age),size=1.1) + 
           scale_x_date(expand=expansion(0.02,0),date_breaks="2 weeks") +
           theme_bw() + standard_theme + theme(strip.text=element_text(size=14),panel.grid.minor.y=element_blank()) +
-          xlab("") + ylab(paste0("cases (7-day smoothed)",ifelse(grepl("Rate",k_var)," per MILLION population",""),
-                                 ifelse(grepl("norm",k_norm)," (normalised to Jan/2021 peak)",""))) + 
+          xlab("") + ylab(paste0(ifelse(grepl("rate",k_var),"Rate of cases","Number of cases"),
+                                 ifelse(grepl("rate",k_var)," per MILLION population",""),
+                                 ifelse(grepl("norm",k_norm)," RELATIVE to Jan/2021 peak","")) ) +
           ggtitle("London cases")
         max_date <- max(df_plot$date)
         if (plot_settings[k_set,1]=="log") { 
@@ -351,8 +352,9 @@ for (k_var in hosp_varnames) {
       
       p <- ggplot(df_plot, aes(x=date)) + 
         scale_x_date(expand=expansion(0.02,0),date_breaks=ifelse(k_start>as.Date("2021-01-31"),"2 weeks","1 month")) + xlab("") + 
-        ylab(paste0("Hospital admissions",ifelse(grepl("rate",k_var)," per MILLION population",""),
-                    ifelse(grepl("norm",k_norm)," (normalised to Jan/2021 peak)","")) ) + 
+        ylab(paste0(ifelse(grepl("rate",k_var),"Rate of admissions","Number of admissions"),
+                    ifelse(grepl("rate",k_var)," per MILLION population",""),
+                    ifelse(grepl("norm",k_norm)," RELATIVE to Jan/2021 peak","")) ) + 
         ggtitle("London COVID-19 hospital admissions") + labs(color="") + theme_bw() + 
         standard_theme + theme(strip.text=element_text(size=14),panel.grid.minor.y=element_blank()) 
       
@@ -449,8 +451,9 @@ for (k_start in start_dates) {
     p <- ggplot(df_plot) + # geom_line(aes(x=date,y=rollingRate,color=age_grp),size=1.1) + 
       scale_x_date(expand=expansion(0.02,0),date_breaks="1 month") +
       theme_bw() + standard_theme + theme(strip.text=element_text(size=14),panel.grid.minor.y=element_blank()) +
-      xlab("") + ylab(paste0("deaths (7-day smoothed)",ifelse(grepl("Rate",k_var)," per MILLION population",""),
-                             ifelse(grepl("norm",k_norm)," (normalised to Jan/2021 peak)",""))) +
+      xlab("") + ylab(paste0(ifelse(grepl("rate",k_var),"Rate of deaths","Number of deaths"),
+                             ifelse(grepl("rate",k_var)," per MILLION population",""),
+                             ifelse(grepl("norm",k_norm)," RELATIVE to Jan/2021 peak","")) ) +
       ggtitle("London COVID-19 deaths")
     
     if (plot_settings[k_set,1]=="log") { 
