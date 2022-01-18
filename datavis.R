@@ -220,13 +220,14 @@ agegr_names=gsub("09","9",gsub("04","4",gsub("^0","",gsub("_","-",unique(eng_cas
 l_num=lapply(1:4, function(x) (x-1)*5+1:5); l_num[[4]]=l_num[[4]][1:4]; 
 agegr_names=paste0(unlist(lapply(l_num, function(x) 
   paste0("[",paste0(agegr_names[x],collapse=","),"]"))),collapse=", ")
+
 # PLOT CHANGE in RATES
 start_date<-as.Date("2021-09-01")
 ggplot(eng_case_age_data %>% filter(date>start_date),
        aes(x=date,y=(rollingsum_chng),color=factor(age_num),group=age_num)) + # -1)*100 # log2
   geom_line() + geom_point(size=3/4,shape=21,fill=NA) + facet_wrap(~age_categ) + # ,scales="free_y") + # 
   geom_hline(yintercept=1,linetype="dashed",size=1/2) + 
-  scale_x_date(expand=expansion(0.01,0),breaks="week") + scale_y_continuous(breaks=c(1/4,1/3,1/2,1,1.5,2,2.5,3,4)) + # 
+  scale_x_date(expand=expansion(0.01,0),breaks="week") + scale_y_continuous(breaks=c(1/4,round(1/3,2),1/2,1,1.5,2,2.5,3,4)) + # 
   labs(color="5-year age bands within age groups",caption=paste0("agegroups: ",gsub("\\], ","\\]\n",agegr_names))) +
   xlab("") + ylab("ratio of weekly rolling sum to a week ago") +
   theme_bw() + standard_theme + theme(axis.text.x=element_text(size=12),axis.text.y=element_text(size=12),
